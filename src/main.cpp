@@ -5,43 +5,22 @@ Ultrasound centerUltrasound (center_ping_pin);
 Ultrasound rightUltrasound  (right_ping_pin);
 MotorControl leftMotor  (LeftMotorA_pin,  LeftMotorB_pin,  LeftMotorPWM_pin);
 MotorControl rightMotor (RightMotorA_pin, RightMotorB_pin, RightMotorPWM_pin);
-
-void go_stop() {
-  leftMotor.halt();
-  rightMotor.halt();
-}
-
-void go_forward() {
-  leftMotor.forward();
-  rightMotor.backward();
-}
-
-void go_backward() {
-  leftMotor.backward();
-  rightMotor.forward();
-}
-
-void go_left() {
-  leftMotor.backward();
-  rightMotor.backward();
-}
-
-void go_right() {
-  leftMotor.forward();
-  rightMotor.forward();
-}
+// PID leftPID (LEFT_KP, LEFT_KI, LEFT_KD);
+// PID rightPID (RIGHT_KP, RIGHT_KI, RIGHT_KD);
+char lastCmd;
 
 void setup() {
   Serial.begin(9600); // Set baud-rate
-  leftMotor.setPWM(MOTOR_PWM);
-  rightMotor.setPWM(MOTOR_PWM);
-
-  go_forward();
-  delay(1000);
-  go_stop();
+  leftMotor.setSpeed(START_SPEED);
+  rightMotor.setSpeed(START_SPEED);
+  lastCmd = 'h';
 }
 
+int i = 0;
+char cmd[256];
+
 void loop() {
+
   // put your main code here, to run repeatedly:
   int left, center, right;
   char line[256];
@@ -55,31 +34,83 @@ void loop() {
   if (center <= STOP_DISTANCE_CENTER) { // If Danger at center...
      // Check whether we should go left or right
      if (left <= right && right > STOP_DISTANCE_SIDE) { // Right has more room than left, so go right.
-       go_right();
-       strcat(line, " -> Right");
+       leftMotor.forward();
+       rightMotor.forward();
+       strcat(line, " -> R");
      }
      else if (left > STOP_DISTANCE_SIDE){ // Left has more room than right, so go left.
-       go_left();
-       strcat(line, " -> Left");
+       leftMotor.backward();
+       rightMotor.backward();
+       strcat(line, " -> L");
      }
-     else {
-       go_backward();
-       strcat(line, " -> Back");
+     else { // Too close so go back
+       leftMotor.backward();
+       rightMotor.forward();
+       strcat(line, " -> B");
      }
    }
    else if (left <= STOP_DISTANCE_SIDE) { // Issue @ left, so go right
-     go_right();
-     strcat(line, " -> Right");
+     leftMotor.forward();
+     rightMotor.forward();
+     strcat(line, " -> R");
    }
    else if (right <= STOP_DISTANCE_SIDE) { // Issue @ right, so go left
-     go_left();
-     strcat(line, " -> Left");
+     leftMotor.backward();
+     rightMotor.backward();
+     strcat(line, " -> L");
    }
    else {
-     go_forward();
-     strcat(line, " -> Forward");
-   }
+     char dir = lastCmd;
+     while (Serial.available() > 0) {
+       cmd[i] = Serial.read();
+       if(cmd[i] == '\n') {
+         cmd[i] = '\0';
+         i = 0;
+         if(sscanf(cmd, "Dir%c", &dir)) {
+          lastCmd = dir;
+         }
+        }
+        else {
+          ++i;
+        }
+      }
+       switch (dir) {
+         case 'F':
+         case 'f':
+          leftMotor.forward();
+          rightMotor.backward();
+          strcat(line, " -> F");
+          break;
+        case 'R':
+        case 'r':
+          leftMotor.forward();
+          rightMotor.forward();
+          strcat(line, " -> R");
+          break;
+        case 'L':
+        case 'l':
+          leftMotor.backward();
+          rightMotor.backward();
+          strcat(line, " -> L");
+          break;
+        case 'B':
+        case 'b':
+          leftMotor.backward();
+          rightMotor.forward();
+          strcat(line, " -> B");
+          break;
+        case 'H':
+        case 'h':
+          leftMotor.halt();
+          rightMotor.halt();
+          strcat(line, " -> Stopped");
+          break;
+        default:
+          break;
+       }
+     }
 
   Serial.println(line);
   delay(100);
+
 }

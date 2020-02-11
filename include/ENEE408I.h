@@ -14,7 +14,8 @@
 #define RightMotorPWM_pin 5
 
 //Other constants
-#define MOTOR_PWM 60
+#define START_SPEED 60
+#define SPEED_MAX 255
 #define STOP_DISTANCE_SIDE 10
 #define STOP_DISTANCE_CENTER 20
 
@@ -39,7 +40,7 @@ class MotorControl{
       pinMode(this->PWM_pin, OUTPUT);
     }
 
-   void setPWM(int PWM_val){
+   void setSpeed(int PWM_val){
       this->PWM_val = PWM_val;
       analogWrite(this->PWM_pin, this->PWM_val);
    }
