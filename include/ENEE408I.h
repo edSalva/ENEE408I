@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "PID.h"
 
 // Ping sensor pins
 #define center_ping_pin 4
@@ -13,8 +14,16 @@
 #define LeftMotorPWM_pin  6
 #define RightMotorPWM_pin 5
 
+// PID constants
+#define LEFT_KP 1
+#define LEFT_KI 0
+#define LEFT_KD 0
+#define RIGHT_KP -1
+#define RIGHT_KI 0
+#define RIGHT_KD 0
+
 //Other constants
-#define START_SPEED 60
+#define START_SPEED 40
 #define SPEED_MAX 255
 #define STOP_DISTANCE_SIDE 10
 #define STOP_DISTANCE_CENTER 20
